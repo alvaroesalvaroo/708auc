@@ -114,16 +114,19 @@ function onSceneLoaded(model)
 // SCREEN RESIZE
 // --------
 
+
 function resize () {
     // Update sizes
     sizes.width = container.clientWidth;
     sizes.height = container.clientHeight;
     console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
     camera.aspect = sizes.width / sizes.height;
-    let isNarrowDevice = sizes.width < narrowThreshold;
-    let initialFov = (isNarrowDevice ? fovNarrow : fov);
-    camera.setFocalLength(initialFov);
-    camera.updateProjectionMatrix();
+
+    initialFov = isNarrowDevice() ? fovNarrow : fov;
+    console.log("fov:", initialFov);
+    // let initialFov = (isNarrowDevice ? fovNarrow : fov);
+
+    // No cambiamos fov. Se cambia dinamicamente.
 
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
@@ -136,10 +139,26 @@ function resize () {
 // INIT SCENE AND CAMERA
 // ------------
 
-const fov = 50;
-const fovNarrow = 45; // For (narrow) mobile devices
-let initialFov = fov;
+const fov = 60;
+const fovNarrow = 80; // For (narrow) mobile devices
+
+let topFov = 50; // less zoom -> more fov
+let topFovNarrow = 80; // Smaller in narrow devices
+
+let bottomFov =40; // more zoom -> less fov
+let bottomFovNarrow = 60;
+
 const narrowThreshold = 500;
+
+
+function isNarrowDevice() {
+    return sizes.width < narrowThreshold;
+}
+
+
+let initialFov = null;
+
+
 let cameraYOffset = 0;
 let camera;
 
@@ -147,7 +166,6 @@ let camPositions = [];
 
 let modelPath = "./caesar-clean.glb";
 
-let minFov = 30;
 
 function isMobilePlatform() {
     if (navigator.userAgentData) {
@@ -200,17 +218,17 @@ function createControls() {
 function init() {
     chooseModel();
     if (isMobilePlatform()) {
-        minFov = 43;
+        topFov = 43;
     }
     console.log("Initializing 3D scene...");
     // Select and clear container
     // container = document.querySelector('#project-details-section .project-slider');
-    // let outherContainer = document.querySelector("#webgl-container")
+    let outherContainer = document.querySelector(".row-bg-wrap");
     // let referenceContainer = document.querySelector("#reference")
     container = document.createElement("div");
 
 
-    container.style.zIndex = 100;
+    container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
     container.style.top = "50%";        // Mitad de la altura
     container.style.right = "0";        // Lo pega al borde derecho
@@ -218,8 +236,12 @@ function init() {
     container.style.paddingTop = "20svh"; // Hacer hueco
     container.style.paddingRight= "10vw";
     container.style.maxWidth = "50vw";
-    document.body.appendChild(container);
+
+    outherContainer.appendChild(container);
+    console.log("Other Container: ", outherContainer);
+    // document.body.appendChild(container);
     // document.body.insertAfter(container, referenceContainer);
+
     // Save original size
     sizes.width = container.clientWidth; sizes.height = container.clientHeight;
     container.classList.add('webgl-container');
@@ -235,6 +257,9 @@ function init() {
         antialias: true,
         alpha: true // To combine other renderers
     });
+
+    // reescale renderer?
+    canvas.style.transform
 
     // Controls relate
 
@@ -299,6 +324,7 @@ window.addEventListener("scroll", () => {
         const scrollTop = window.scrollY;
         const docHeight = document.body.scrollHeight - window.innerHeight;
         scrollPercent = scrollTop / docHeight;
+        // console.log(camera.fov);
     }
 );
 
@@ -324,7 +350,12 @@ function animate() {
 
 
     // Camera zoom
-    camera.fov = minFov * scrollPercent + initialFov *(1 - scrollPercent);
+    if (isNarrowDevice()) {
+        camera.fov = topFovNarrow * (1 - scrollPercent) + bottomFovNarrow * scrollPercent ;
+    }
+    else {
+        camera.fov = topFov * (1 - scrollPercent) + bottomFov * scrollPercent;
+    }
     camera.updateProjectionMatrix();
     // const targetPos = new THREE.Vector3().copy(camPositions[0]);
     // targetPos.lerp(camPositions[1], scrollPercent); // scrollPercent debe ser de 0 a 1

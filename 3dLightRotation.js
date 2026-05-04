@@ -11,7 +11,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const scene = new THREE.Scene();
 
 // ----- CONFIG ------ //
-let modelOnFront = false;
+let modelOnFrontMobile = false;
+let modelOnFrontDesktop = true;
 
 let cameraYOffset = 0;
 let textureFilename = 'disturb.jpg';
@@ -28,7 +29,9 @@ const narrowThreshold = 500;
 
 // -------APPLY CONFIG (not implemented) ---------- //
 const params = new URLSearchParams(window.location.search);
-
+if (params.get('modelOnFrontDesktop') === 'false') {
+    modelOnFrontDesktop = false;
+}
 
 
 let container = {};
@@ -159,10 +162,17 @@ function resize () {
 // INIT SCENE AND CAMERA
 // ------------
 
-
-
 function isNarrowDevice() {
     return sizes.width < narrowThreshold;
+}
+function isMobileDevice() {
+    const userAgentCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // touch screen con pantalla pequeña:
+    const touchCheck = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const screenCheck = window.innerWidth <= 1024;
+
+    return userAgentCheck || (touchCheck && screenCheck);
 }
 
 let camera;
@@ -237,20 +247,20 @@ function init() {
     container.style.paddingTop = "20svh"; // Hacer hueco
     container.style.paddingRight= "10vw";
     container.style.maxWidth = "50vw";
+    container.classList.add('webgl-container');
+    container.innerHTML = "";
+    container.style.height = "100%";
 
-    if (modelOnFront) {
+    // Save original size
+    sizes.width = container.clientWidth; sizes.height = container.clientHeight;
+
+    if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
         document.body.appendChild(container);
     }
     else {
         let outerContainer = document.querySelector(".row-bg-wrap");
         outerContainer.appendChild(container);
     }
-
-    // Save original size
-    sizes.width = container.clientWidth; sizes.height = container.clientHeight;
-    container.classList.add('webgl-container');
-    container.innerHTML = "";
-    container.style.height = "100%";
 
     // Append canvas
     canvas = document.createElement("canvas");

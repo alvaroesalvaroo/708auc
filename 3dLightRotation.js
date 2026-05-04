@@ -4,30 +4,49 @@
  * @author Alvaro Ruiz - alvaro-ruiz.dev
  */
 
-
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-// import { GridHelper} from "./three/src/helpers/GridHelper.js";
-
 
 const scene = new THREE.Scene();
+
+// ----- CONFIG ------ //
+let modelOnFront = false;
+
+let cameraYOffset = 0;
+let textureFilename = 'disturb.jpg';
+let modelPath = "./caesar-clean.glb";
+
+
+let topFov = 50; // less zoom -> more fov
+let topFovNarrow = 80; // Smaller in narrow devices
+
+let bottomFov =40; // more zoom -> less fov
+let bottomFovNarrow = 60;
+
+const narrowThreshold = 500;
+
+// -------APPLY CONFIG (not implemented) ---------- //
+const params = new URLSearchParams(window.location.search);
+
 
 
 let container = {};
 const sizes = {};
 let statue = {};
-// Create renderer in html canvas webgl element
+
 let canvas = {};
 let renderer = {};
 let controls = {};
 let controlsDomElement = {};
 
 let spotLight = {};
-const lights = [];
+let spotLight2 = {};
+const lights = []; // Luces añadidas a la escena cargada. Servirán como referencia para la posición de la 1ª luz
+
 let lightTarget = {};
-let lightOrbitRadius = 1;
-console.log("Init 3D light rotation script");
+let lightOrbitRadius = 1; // Distancia de la luz a la estatua
+
 function setupLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff);
     ambientLight.intensity = 0.2;
@@ -40,13 +59,11 @@ function setupLights() {
 
     // Load texture
     const texLoader = new THREE.TextureLoader().setPath( './' );
-    const filename = 'disturb.jpg';
-    const texture = texLoader.load( filename );
+    const texture = texLoader.load( textureFilename );
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.generateMipmaps = false;
     texture.colorSpace = THREE.SRGBColorSpace;
-    console.log(texture);
 
     // Setup stoplight
     spotLight = new THREE.SpotLight( 0xffffff, 100 );
@@ -79,12 +96,18 @@ function setupLights() {
     spotLight.shadow.bias = - .003;
     spotLight.shadow.intensity = 1;
 
-    // lightTarget.add(spotLight);  // spotLight hijo de lightTarget
     scene.add(spotLight);      // solo lightTarget a la escena
+
+    // Segunda spotLight
+    spotLight2 = new THREE.SpotLight();
+    spotLight2.copy(spotLight);
+    spotLight2.map = texture;
+
+    scene.add(spotLight2);
     // statue
+
     statue.reciveShadow = true;
     statue.castShadow = true;
-    console.log(statue);
 }
 
 function onSceneLoaded(model)
@@ -96,7 +119,7 @@ function onSceneLoaded(model)
     model.traverse( ( child ) => {
         if (child.isLight) {
             lights.push(child);
-            console.log("Pushed light");
+            console.log("light position found");
         }
         else if (child.isMesh) {
             statue = child;
@@ -119,14 +142,11 @@ function resize () {
     // Update sizes
     sizes.width = container.clientWidth;
     sizes.height = container.clientHeight;
-    console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
+    // console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
     camera.aspect = sizes.width / sizes.height;
 
-    initialFov = isNarrowDevice() ? fovNarrow : fov;
-    console.log("fov:", initialFov);
-    // let initialFov = (isNarrowDevice ? fovNarrow : fov);
+    onScroll(); // Por si cargamos la página a "mitad" scrollear
 
-    // No cambiamos fov. Se cambia dinamicamente.
 
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
@@ -139,32 +159,16 @@ function resize () {
 // INIT SCENE AND CAMERA
 // ------------
 
-const fov = 60;
-const fovNarrow = 80; // For (narrow) mobile devices
-
-let topFov = 50; // less zoom -> more fov
-let topFovNarrow = 80; // Smaller in narrow devices
-
-let bottomFov =40; // more zoom -> less fov
-let bottomFovNarrow = 60;
-
-const narrowThreshold = 500;
 
 
 function isNarrowDevice() {
     return sizes.width < narrowThreshold;
 }
 
-
-let initialFov = null;
-
-
-let cameraYOffset = 0;
 let camera;
 
 let camPositions = [];
 
-let modelPath = "./caesar-clean.glb";
 
 
 function isMobilePlatform() {
@@ -176,7 +180,6 @@ function isMobilePlatform() {
 }
 
 function chooseModel() {
-    const params = new URLSearchParams(window.location.search);
     const modelParam = params.get('model'); // Busca el valor de ?model=
 
     if (modelParam === 'discobolo') {
@@ -188,19 +191,18 @@ function chooseModel() {
 }
 
 function createControls() {
-    const params = new URLSearchParams(window.location.search);
-    const controlsParam = params.get('controls'); // Busca el valor de ?controls=
-
     controlsDomElement = document.createElement('div');
-    controlsDomElement.classList.add('controls');
-    controlsDomElement.style.position = 'absolute';
-    controlsDomElement.style.top = '0';
-    controlsDomElement.style.width = '100%';
-    controlsDomElement.style.height = '100%';
+    controlsDomElement.classList.add('controlssss');
+    // controlsDomElement.style.position = 'absolute';
+    // controlsDomElement.style.top = '0';
+    // controlsDomElement.style.width = '50%';
+    // controlsDomElement.style.height = '100%';
+    controlsDomElement.style.cssText = container.style.cssText;
+    controlsDomElement.style.minWidth = '45%';
     controlsDomElement.style.pointerEvents = 'auto';
-    controlsDomElement.style.zIndex = '100';
-    container.appendChild(controlsDomElement);
-    // document.body.appendChild(controlsDomElement);
+    controlsDomElement.style.zIndex = '1000';
+    // container.appendChild(controlsDomElement);
+    document.body.appendChild(controlsDomElement);
 
     controls = new OrbitControls(camera, controlsDomElement);
     controls.enableDamping = true; // Suaviza el movimiento (da inercia)
@@ -208,6 +210,10 @@ function createControls() {
     controls.enableZoom = false;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false; // Mantiene el eje Y estable
+
+
+    const params = new URLSearchParams(window.location.search);
+    const controlsParam = params.get('controls'); // Busca el valor de ?controls=
 
     if (controlsParam === 'disabled') {
         controlsDomElement.style.pointerEvents = 'none';
@@ -220,13 +226,8 @@ function init() {
     if (isMobilePlatform()) {
         topFov = 43;
     }
-    console.log("Initializing 3D scene...");
-    // Select and clear container
-    // container = document.querySelector('#project-details-section .project-slider');
-    let outherContainer = document.querySelector(".row-bg-wrap");
-    // let referenceContainer = document.querySelector("#reference")
-    container = document.createElement("div");
 
+    container = document.createElement("div");
 
     container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
@@ -237,10 +238,13 @@ function init() {
     container.style.paddingRight= "10vw";
     container.style.maxWidth = "50vw";
 
-    outherContainer.appendChild(container);
-    console.log("Other Container: ", outherContainer);
-    // document.body.appendChild(container);
-    // document.body.insertAfter(container, referenceContainer);
+    if (modelOnFront) {
+        document.body.appendChild(container);
+    }
+    else {
+        let outerContainer = document.querySelector(".row-bg-wrap");
+        outerContainer.appendChild(container);
+    }
 
     // Save original size
     sizes.width = container.clientWidth; sizes.height = container.clientHeight;
@@ -263,18 +267,14 @@ function init() {
 
     // Controls relate
 
-    camera = new THREE.PerspectiveCamera(fov,
+    camera = new THREE.PerspectiveCamera(topFov,
         sizes.width / sizes.height,   // aspect
         0.01,                          // near point
         1000                          // far away point
     );
 
-
-
-
     window.addEventListener("resize", resize);
 
-    console.log("Init lab (small) scene in container with sizes: " + sizes.width + ", " + sizes.height);
 
     // Load glb model
     const loader = new GLTFLoader();
@@ -305,9 +305,6 @@ function init() {
         camera.position.copy(camPositions[0].position);
         camera.position.y -= cameraYOffset;
 
-        const initialDistance = camera.position.distanceTo(controls.target);
-        controls.minDistance = initialDistance;
-        controls.maxDistance = initialDistance + 1;
         camera.lookAt(statue.position);
 
         renderer.setAnimationLoop( animate );
@@ -319,14 +316,14 @@ function init() {
 }
 
 let scrollPercent = 0;
-window.addEventListener("scroll", () => {
-        // Calculamos qué porcentaje de la página se ha recorrido
-        const scrollTop = window.scrollY;
-        const docHeight = document.body.scrollHeight - window.innerHeight;
-        scrollPercent = scrollTop / docHeight;
-        // console.log(camera.fov);
-    }
-);
+function onScroll() {
+
+    // Calculamos qué porcentaje de la página se ha recorrido
+    const scrollTop = window.scrollY;
+    const docHeight = document.body.scrollHeight - window.innerHeight;
+    scrollPercent = scrollTop / docHeight;
+}
+window.addEventListener("scroll", onScroll);
 
 // -------------
 // MAIN LOOP
@@ -347,6 +344,8 @@ function animate() {
     const angle = clock.getElapsedTime() * speed;
     spotLight.position.x = Math.cos(angle) * lightOrbitRadius;
     spotLight.position.z = Math.sin(angle) * lightOrbitRadius;
+    spotLight2.position.x = Math.cos(angle + Math.PI) * lightOrbitRadius;
+    spotLight2.position.z = Math.sin(angle + Math.PI) * lightOrbitRadius;
 
 
     // Camera zoom

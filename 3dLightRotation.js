@@ -238,18 +238,20 @@ function init() {
     }
 
     container = document.createElement("div");
+    container.classList.add('webgl-container');
 
     container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
     container.style.top = "50%";        // Mitad de la altura
     container.style.right = "0";        // Lo pega al borde derecho
-    container.style.transform = "translateY(-50%)"; // Corregir altura
-    container.style.paddingTop = "20svh"; // Hacer hueco
+    container.style.transform = "translateY(-50%)"; // Me encantaría no tener que usar esto pero lo uso.
+    container.style.paddingTop = "20dvh"; // Hacer hueco
+    container.style.height = "100dvh";
+
     container.style.paddingRight= "5vw";
     container.style.maxWidth = "50vw";
-    container.classList.add('webgl-container');
     container.innerHTML = "";
-    container.style.height = "100%";
+    // container.style.transition = "top 0.6s ease, transform 0.6s ease, height 0.6s ease";
 
     if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
         document.body.appendChild(container);
@@ -326,13 +328,21 @@ function init() {
 }
 
 let scrollPercent = 0;
+let lastScrollPercent = 0;
 function onScroll() {
-
+    lastScrollPercent = scrollPercent;
     // Calculamos qué porcentaje de la página se ha recorrido
     const scrollTop = window.scrollY;
     const docHeight = document.body.scrollHeight - window.innerHeight;
-    scrollPercent = scrollTop / docHeight;
+    const newScrollPercent = scrollTop / docHeight;
+    scrollPercent += (newScrollPercent - scrollPercent) * 0.3; // lerp
 }
+
+// function onScroll() {
+//     const scrollTop = window.scrollY;
+//     const docHeight = document.body.scrollHeight - (window.visualViewport?.height ?? window.innerHeight);
+//     scrollPercent = Math.min(Math.max(scrollTop / docHeight, 0), 1); // clamp entre 0 y 1
+// }
 window.addEventListener("scroll", onScroll);
 
 // -------------

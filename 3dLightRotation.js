@@ -140,11 +140,16 @@ function onSceneLoaded(model)
 // SCREEN RESIZE
 // --------
 
-
+let lastWidth = 100;
+let lastHeight = 0;
 function resize () {
     // Update sizes
-    sizes.width = container.clientWidth;
-    sizes.height = container.clientHeight;
+    lastWidth = container.clientWidth;
+    lastHeight = container.clientHeight;
+    // scrollPercent += (newScrollPercent - scrollPercent) * 0.3; // lerp
+
+    sizes.width += (container.clientWidth - lastWidth) * 0.3;
+    sizes.height += (container.clientHeight - lastHeight) * 0.3;
     // console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
     camera.aspect = sizes.width / sizes.height;
 
@@ -154,6 +159,16 @@ function resize () {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+}
+let scrollPercent = 0;
+let lastScrollPercent = 0;
+function onScroll() {
+    lastScrollPercent = scrollPercent;
+    // Calculamos qué porcentaje de la página se ha recorrido
+    const scrollTop = window.scrollY;
+    const docHeight = document.body.scrollHeight - window.innerHeight;
+    const newScrollPercent = scrollTop / docHeight;
+    scrollPercent += (newScrollPercent - lastScrollPercent) * 0.3; // lerp
 }
 
 
@@ -225,9 +240,9 @@ function createControls() {
     const params = new URLSearchParams(window.location.search);
     const controlsParam = params.get('controls'); // Busca el valor de ?controls=
 
-    if (controlsParam === 'disabled') {
+    if (controlsParam === 'disabled' || controlsParam === 'false') {
         controlsDomElement.style.pointerEvents = 'none';
-        controlsDomElement.style.zIndex = '0';
+        controlsDomElement.style.zIndex = '-10';
     }
 }
 
@@ -327,16 +342,7 @@ function init() {
     } );
 }
 
-let scrollPercent = 0;
-let lastScrollPercent = 0;
-function onScroll() {
-    lastScrollPercent = scrollPercent;
-    // Calculamos qué porcentaje de la página se ha recorrido
-    const scrollTop = window.scrollY;
-    const docHeight = document.body.scrollHeight - window.innerHeight;
-    const newScrollPercent = scrollTop / docHeight;
-    scrollPercent += (newScrollPercent - scrollPercent) * 0.3; // lerp
-}
+
 
 // function onScroll() {
 //     const scrollTop = window.scrollY;

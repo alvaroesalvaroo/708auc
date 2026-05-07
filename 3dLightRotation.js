@@ -25,7 +25,7 @@ let topFovNarrow = 80; // Smaller in narrow devices
 let bottomFov =40; // more zoom -> less fov
 let bottomFovNarrow = 60;
 
-const narrowThreshold = 500;
+const narrowThreshold = 1000;
 
 // -------APPLY CONFIG (not implemented) ---------- //
 const params = new URLSearchParams(window.location.search);
@@ -163,7 +163,7 @@ function resize () {
 // ------------
 
 function isNarrowDevice() {
-    return sizes.width < narrowThreshold;
+    return window.innerWidth < narrowThreshold;
 }
 function isMobileDevice() {
     const userAgentCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -245,14 +245,11 @@ function init() {
     container.style.right = "0";        // Lo pega al borde derecho
     container.style.transform = "translateY(-50%)"; // Corregir altura
     container.style.paddingTop = "20svh"; // Hacer hueco
-    container.style.paddingRight= "10vw";
+    container.style.paddingRight= "5vw";
     container.style.maxWidth = "50vw";
     container.classList.add('webgl-container');
     container.innerHTML = "";
     container.style.height = "100%";
-
-    // Save original size
-    sizes.width = container.clientWidth; sizes.height = container.clientHeight;
 
     if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
         document.body.appendChild(container);
@@ -262,8 +259,12 @@ function init() {
         outerContainer.appendChild(container);
     }
 
+    // Save original size
+    sizes.width = container.clientWidth; sizes.height = container.clientHeight;
+
     // Append canvas
     canvas = document.createElement("canvas");
+    canvas.textContent = "Tu navegador no soporta canvas o la animación no se pudo cargar. Esta escena muestra una estatua de Julio César rotando al hacer scroll.";
     container.appendChild(canvas);
 
     renderer = new THREE.WebGLRenderer({
@@ -272,8 +273,6 @@ function init() {
         alpha: true // To combine other renderers
     });
 
-    // reescale renderer?
-    canvas.style.transform
 
     // Controls relate
 
@@ -295,7 +294,6 @@ function init() {
         setupLights();
         // Controls require an invisible dom element
         createControls();
-        resize();
 
         controls.target.copy(statue.position);
         controls.target.y -= 0.3;
@@ -316,6 +314,8 @@ function init() {
         camera.position.y -= cameraYOffset;
 
         camera.lookAt(statue.position);
+
+        resize();
 
         renderer.setAnimationLoop( animate );
         // controls.active = false;
@@ -360,9 +360,11 @@ function animate() {
 
     // Camera zoom
     if (isNarrowDevice()) {
+        // console.log("isNarrow");
         camera.fov = topFovNarrow * (1 - scrollPercent) + bottomFovNarrow * scrollPercent ;
     }
     else {
+        // console.log("NOT Narrow");
         camera.fov = topFov * (1 - scrollPercent) + bottomFov * scrollPercent;
     }
     camera.updateProjectionMatrix();

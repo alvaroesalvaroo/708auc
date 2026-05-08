@@ -140,18 +140,26 @@ function onSceneLoaded(model)
 // SCREEN RESIZE
 // --------
 
-let lastWidth = 100;
+// TODO: arreglar resize
+// window.addEventListener("resize", resize);
+
+let lastWidth = 400;
 let lastHeight = 0;
 function resize () {
+
     // Update sizes
-    lastWidth = container.clientWidth;
-    lastHeight = container.clientHeight;
+    // return;
+    // lastWidth = container.clientWidth;
+    // lastHeight = container.clientHeight;
     // scrollPercent += (newScrollPercent - scrollPercent) * 0.3; // lerp
 
-    sizes.width += (container.clientWidth - lastWidth) * 0.3;
-    sizes.height += (container.clientHeight - lastHeight) * 0.3;
+    // sizes.width += (container.clientWidth - lastWidth) * 0.3;
+    // sizes.height += (container.clientHeight - lastHeight) * 0.3;
+    // sizes.width = lastWidth;
+    // sizes.height = lastHeight;
     // console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
-    camera.aspect = sizes.width / sizes.height;
+    // camera.aspect = sizes.width / sizes.height;
+
 
     onScroll(); // Por si cargamos la página a "mitad" scrollear
 
@@ -160,15 +168,20 @@ function resize () {
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
+
+
 let scrollPercent = 0;
-let lastScrollPercent = 0;
+let marginPercent = 0;
+// let lastScrollPercent = 0;
 function onScroll() {
-    lastScrollPercent = scrollPercent;
+    // lastScrollPercent = scrollPercent;
     // Calculamos qué porcentaje de la página se ha recorrido
     const scrollTop = window.scrollY;
     const docHeight = document.body.scrollHeight - window.innerHeight;
-    const newScrollPercent = scrollTop / docHeight;
-    scrollPercent += (newScrollPercent - lastScrollPercent) * 0.3; // lerp
+    scrollPercent = scrollTop / docHeight;
+
+    // const newScrollPercent = scrollTop / docHeight; // Lerp descartado
+    // scrollPercent += (newScrollPercent - lastScrollPercent) * 0.3;
 }
 
 
@@ -263,8 +276,9 @@ function init() {
     container.style.paddingTop = "20dvh"; // Hacer hueco
     container.style.height = "100dvh";
 
-    container.style.paddingRight= "5vw";
+    // container.style.paddingRight= "5vw";
     container.style.maxWidth = "50vw";
+    container.style.minWidth = "45vw";
     container.innerHTML = "";
     // container.style.transition = "top 0.6s ease, transform 0.6s ease, height 0.6s ease";
 
@@ -281,6 +295,10 @@ function init() {
 
     // Append canvas
     canvas = document.createElement("canvas");
+    // canvas.classList.add('canvas100x100');
+    // canvas.style.position = "absolute";
+
+    canvas.style.right="0";
     canvas.textContent = "Tu navegador no soporta canvas o la animación no se pudo cargar. Esta escena muestra una estatua de Julio César rotando al hacer scroll.";
     container.appendChild(canvas);
 
@@ -299,7 +317,7 @@ function init() {
         1000                          // far away point
     );
 
-    window.addEventListener("resize", resize);
+
 
 
     // Load glb model

@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GridHelper } from 'three';
 
 const scene = new THREE.Scene();
 
@@ -14,7 +15,11 @@ const scene = new THREE.Scene();
 let modelOnFrontMobile = false;
 let modelOnFrontDesktop = true;
 
-let cameraYOffset = 0;
+let containerTop = "-100px";
+let containerRight = "-10vw";
+
+
+
 let textureFilename = 'disturb.jpg';
 let modelPath = "./caesar-clean.glb";
 
@@ -116,8 +121,11 @@ function setupLights() {
 function onSceneLoaded(model)
 {
     scene.add( model );
-    // const gridHelper = new THREE.GridHelper( 1, 1 );
-    // scene.add( gridHelper );
+    if (params.get('grid') == 1) {
+        const gridHelper = new THREE.GridHelper( 10, 10 );
+        scene.add( gridHelper );
+    }
+
 
     model.traverse( ( child ) => {
         if (child.isLight) {
@@ -140,13 +148,26 @@ function onSceneLoaded(model)
 // SCREEN RESIZE
 // --------
 
+// TODO: arreglar resize
+// window.addEventListener("resize", resize);
 
+let lastWidth = 400;
+let lastHeight = 0;
 function resize () {
+
     // Update sizes
-    sizes.width = container.clientWidth;
-    sizes.height = container.clientHeight;
+    // return;
+    // lastWidth = container.clientWidth;
+    // lastHeight = container.clientHeight;
+    // scrollPercent += (newScrollPercent - scrollPercent) * 0.3; // lerp
+
+    // sizes.width += (container.clientWidth - lastWidth) * 0.3;
+    // sizes.height += (container.clientHeight - lastHeight) * 0.3;
+    // sizes.width = lastWidth;
+    // sizes.height = lastHeight;
     // console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
-    camera.aspect = sizes.width / sizes.height;
+    // camera.aspect = sizes.width / sizes.height;
+
 
     onScroll(); // Por si cargamos la página a "mitad" scrollear
 
@@ -154,6 +175,21 @@ function resize () {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+}
+
+
+let scrollPercent = 0;
+let marginPercent = 0;
+let maxScrollPercent = 0.9; // Dejar margen al footer
+function onScroll() {
+    // lastScrollPercent = scrollPercent;
+    // Calculamos qué porcentaje de la página se ha recorrido
+    const scrollTop = window.scrollY;
+    const docHeight = document.body.scrollHeight - window.innerHeight;
+    scrollPercent = scrollTop / docHeight;
+
+    // const newScrollPercent = scrollTop / docHeight; // Lerp descartado
+    // scrollPercent += (newScrollPercent - lastScrollPercent) * 0.3;
 }
 
 
@@ -191,13 +227,6 @@ function isMobilePlatform() {
 
 function chooseModel() {
     const modelParam = params.get('model'); // Busca el valor de ?model=
-
-    if (modelParam === 'discobolo') {
-        modelPath = "./discobolo.glb";
-        cameraYOffset = 30;
-    } else {
-
-    }
 }
 
 function createControls() {
@@ -225,9 +254,9 @@ function createControls() {
     const params = new URLSearchParams(window.location.search);
     const controlsParam = params.get('controls'); // Busca el valor de ?controls=
 
-    if (controlsParam === 'disabled') {
+    if (controlsParam === 'disabled' || controlsParam === 'false') {
         controlsDomElement.style.pointerEvents = 'none';
-        controlsDomElement.style.zIndex = '0';
+        controlsDomElement.style.zIndex = '-10';
     }
 }
 
@@ -238,18 +267,21 @@ function init() {
     }
 
     container = document.createElement("div");
+    container.classList.add('webgl-container');
 
     container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
-    container.style.top = "50%";        // Mitad de la altura
-    container.style.right = "0";        // Lo pega al borde derecho
-    container.style.transform = "translateY(-50%)"; // Corregir altura
-    container.style.paddingTop = "20svh"; // Hacer hueco
-    container.style.paddingRight= "5vw";
+    container.style.top = containerTop;        // Mitad de la altura
+    container.style.right = containerRight;        // Lo pega al borde derecho
+    // container.style.transform = "translateY(-50%)"; // Me encantaría no tener que usar esto pero lo uso.
+    container.style.paddingTop = "20dvh"; // Hacer hueco
+    container.style.height = "100dvh";
+
+    // container.style.paddingRight= "5vw";
     container.style.maxWidth = "50vw";
-    container.classList.add('webgl-container');
+    container.style.minWidth = "45vw";
     container.innerHTML = "";
-    container.style.height = "100%";
+    // container.style.transition = "top 0.6s ease, transform 0.6s ease, height 0.6s ease";
 
     if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
         document.body.appendChild(container);
@@ -264,6 +296,10 @@ function init() {
 
     // Append canvas
     canvas = document.createElement("canvas");
+    // canvas.classList.add('canvas100x100');
+    // canvas.style.position = "absolute";
+
+    canvas.style.right="0";
     canvas.textContent = "Tu navegador no soporta canvas o la animación no se pudo cargar. Esta escena muestra una estatua de Julio César rotando al hacer scroll.";
     container.appendChild(canvas);
 
@@ -282,7 +318,7 @@ function init() {
         1000                          // far away point
     );
 
-    window.addEventListener("resize", resize);
+
 
 
     // Load glb model
@@ -294,8 +330,16 @@ function init() {
         setupLights();
         // Controls require an invisible dom element
         createControls();
+        const worldPos = new THREE.Vector3();
 
-        controls.target.copy(statue.position);
+        camera.getWorldPosition(worldPos);
+        statue.getWorldPosition(worldPos);
+
+        let camTarget = new THREE.Vector3().copy(statue.position);
+        camTarget.x += 0;
+        camTarget.y += 0;
+
+        controls.target.copy(camTarget);
         controls.target.y -= 0.3;
         controls.update();
 
@@ -310,10 +354,13 @@ function init() {
         controls.maxPolarAngle = currentPolar; // Un poco hacia abajo
         controls.update();
 
-        camera.position.copy(camPositions[0].position);
-        camera.position.y -= cameraYOffset;
 
-        camera.lookAt(statue.position);
+
+        camera.position.copy(camPositions[0].position);
+        // camera.position.y -= cameraYOffset;
+        // camera.position.x -= cameraXOffset;
+
+        // camera.lookAt(camTarget);
 
         resize();
 
@@ -325,14 +372,13 @@ function init() {
     } );
 }
 
-let scrollPercent = 0;
-function onScroll() {
 
-    // Calculamos qué porcentaje de la página se ha recorrido
-    const scrollTop = window.scrollY;
-    const docHeight = document.body.scrollHeight - window.innerHeight;
-    scrollPercent = scrollTop / docHeight;
-}
+
+// function onScroll() {
+//     const scrollTop = window.scrollY;
+//     const docHeight = document.body.scrollHeight - (window.visualViewport?.height ?? window.innerHeight);
+//     scrollPercent = Math.min(Math.max(scrollTop / docHeight, 0), 1); // clamp entre 0 y 1
+// }
 window.addEventListener("scroll", onScroll);
 
 // -------------

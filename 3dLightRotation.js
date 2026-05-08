@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GridHelper } from 'three';
 
 const scene = new THREE.Scene();
 
@@ -14,7 +15,11 @@ const scene = new THREE.Scene();
 let modelOnFrontMobile = false;
 let modelOnFrontDesktop = true;
 
-let cameraYOffset = 0;
+let containerTop = "-100px";
+let containerRight = "-10vw";
+
+
+
 let textureFilename = 'disturb.jpg';
 let modelPath = "./caesar-clean.glb";
 
@@ -116,8 +121,11 @@ function setupLights() {
 function onSceneLoaded(model)
 {
     scene.add( model );
-    // const gridHelper = new THREE.GridHelper( 1, 1 );
-    // scene.add( gridHelper );
+    if (params.get('grid') == 1) {
+        const gridHelper = new THREE.GridHelper( 10, 10 );
+        scene.add( gridHelper );
+    }
+
 
     model.traverse( ( child ) => {
         if (child.isLight) {
@@ -172,7 +180,7 @@ function resize () {
 
 let scrollPercent = 0;
 let marginPercent = 0;
-// let lastScrollPercent = 0;
+let maxScrollPercent = 0.9; // Dejar margen al footer
 function onScroll() {
     // lastScrollPercent = scrollPercent;
     // Calculamos qué porcentaje de la página se ha recorrido
@@ -219,13 +227,6 @@ function isMobilePlatform() {
 
 function chooseModel() {
     const modelParam = params.get('model'); // Busca el valor de ?model=
-
-    if (modelParam === 'discobolo') {
-        modelPath = "./discobolo.glb";
-        cameraYOffset = 30;
-    } else {
-
-    }
 }
 
 function createControls() {
@@ -270,9 +271,9 @@ function init() {
 
     container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
-    container.style.top = "50%";        // Mitad de la altura
-    container.style.right = "0";        // Lo pega al borde derecho
-    container.style.transform = "translateY(-50%)"; // Me encantaría no tener que usar esto pero lo uso.
+    container.style.top = containerTop;        // Mitad de la altura
+    container.style.right = containerRight;        // Lo pega al borde derecho
+    // container.style.transform = "translateY(-50%)"; // Me encantaría no tener que usar esto pero lo uso.
     container.style.paddingTop = "20dvh"; // Hacer hueco
     container.style.height = "100dvh";
 
@@ -329,8 +330,16 @@ function init() {
         setupLights();
         // Controls require an invisible dom element
         createControls();
+        const worldPos = new THREE.Vector3();
 
-        controls.target.copy(statue.position);
+        camera.getWorldPosition(worldPos);
+        statue.getWorldPosition(worldPos);
+
+        let camTarget = new THREE.Vector3().copy(statue.position);
+        camTarget.x += 0;
+        camTarget.y += 0;
+
+        controls.target.copy(camTarget);
         controls.target.y -= 0.3;
         controls.update();
 
@@ -345,10 +354,13 @@ function init() {
         controls.maxPolarAngle = currentPolar; // Un poco hacia abajo
         controls.update();
 
-        camera.position.copy(camPositions[0].position);
-        camera.position.y -= cameraYOffset;
 
-        camera.lookAt(statue.position);
+
+        camera.position.copy(camPositions[0].position);
+        // camera.position.y -= cameraYOffset;
+        // camera.position.x -= cameraXOffset;
+
+        // camera.lookAt(camTarget);
 
         resize();
 

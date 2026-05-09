@@ -53,7 +53,9 @@ let spotLight2 = {};
 const lights = []; // Luces añadidas a la escena cargada. Servirán como referencia para la posición de la 1ª luz
 
 let lightTarget = {};
-let lightOrbitRadius = 1; // Distancia de la luz a la estatua
+let lightOrbitRadius = 1; // Distancia de la luz a la estatua. Recalculada al cargar el modelo
+
+const LIGHT_OFFSET = 1; // D
 
 function setupLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff);
@@ -62,7 +64,7 @@ function setupLights() {
 
     for (const light of lights) {
         light.active = false;
-        light.intensity = 0; // BLENDER-THREE.JS LIGHT ADJUSTEMENT
+        light.intensity = 0;// Deactivate lights in scene
     }
 
     // Load texture
@@ -84,31 +86,32 @@ function setupLights() {
 
     spotLight.name = 'spotLight';
     spotLight.map = texture;
-    // spotLight.angle = Math.PI / 6;
     lightTarget = new THREE.Object3D();
     lightTarget.position.copy(statue.position);
-    lightTarget.position.y += 2;
-
+    lightTarget.position.y += LIGHT_OFFSET;
+    scene.add(lightTarget);
     spotLight.target = lightTarget;
     spotLight.penumbra = 1;
-    spotLight.decay = 2;
+    spotLight.decay = 2.3;
     spotLight.distance = 0;
-    spotLight.intensity = 50;
+    spotLight.intensity = 40;
 
-    spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-    spotLight.shadow.camera.near = 2;
-    spotLight.shadow.camera.far = 10;
-    spotLight.shadow.focus = 1;
-    spotLight.shadow.bias = - .003;
-    spotLight.shadow.intensity = 1;
+    // NO PROYECTAMOS SOMBRA
+    spotLight.castShadow = false;
+    // spotLight.shadow.mapSize.width = 1024;
+    // spotLight.shadow.mapSize.height = 1024;
+    // spotLight.shadow.camera.near = 2;
+    // spotLight.shadow.camera.far = 10;
+    // spotLight.shadow.focus = 1;
+    // spotLight.shadow.bias = - .003;
+    // spotLight.shadow.intensity = 1;
 
     scene.add(spotLight);      // solo lightTarget a la escena
 
     // Segunda spotLight
     spotLight2 = new THREE.SpotLight();
     spotLight2.copy(spotLight);
+    spotLight2.target = lightTarget;
     spotLight2.map = texture;
 
     scene.add(spotLight2);
@@ -271,17 +274,15 @@ function init() {
 
     container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
-    container.style.top = containerTop;        // Mitad de la altura
-    container.style.right = containerRight;        // Lo pega al borde derecho
-    // container.style.transform = "translateY(-50%)"; // Me encantaría no tener que usar esto pero lo uso.
-    container.style.paddingTop = "20dvh"; // Hacer hueco
-    container.style.height = "100dvh";
+    container.style.top = containerTop;        // OFFSETY
+    container.style.right = containerRight;        // OFFSETX
 
-    // container.style.paddingRight= "5vw";
+    container.style.paddingTop = "20lvh"; // LVH ES LA MEJOR MANERA DE EVITAR SALTOS EN MOVILE. dhv funciona en apple, en android regular
+    container.style.height = "100lvh";
+
     container.style.maxWidth = "50vw";
     container.style.minWidth = "45vw";
     container.innerHTML = "";
-    // container.style.transition = "top 0.6s ease, transform 0.6s ease, height 0.6s ease";
 
     if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
         document.body.appendChild(container);
@@ -336,7 +337,7 @@ function init() {
         statue.getWorldPosition(worldPos);
 
         let camTarget = new THREE.Vector3().copy(statue.position);
-        camTarget.x += 0;
+        camTarget.x += 0; // possible offset?
         camTarget.y += 0;
 
         controls.target.copy(camTarget);
@@ -424,5 +425,3 @@ function animate() {
 }
 
 init();
-
-

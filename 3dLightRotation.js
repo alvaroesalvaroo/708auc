@@ -21,7 +21,7 @@ let containerRight = "-10vw";
 
 
 let textureFilename = 'disturb.jpg';
-let modelPath = "./caesar-clean.glb";
+let modelPath = "./caesar-46k.glb";
 
 
 let topFov = 50; // less zoom -> more fov
@@ -32,7 +32,9 @@ let bottomFovNarrow = 60;
 
 const narrowThreshold = 1000;
 
-// -------APPLY CONFIG (not implemented) ---------- //
+// -------APPLY CONFIG---------- //
+// urlparams compatibles en true/false son "modelOnFrontDesktop", "controls" y "grid"
+
 const params = new URLSearchParams(window.location.search);
 if (params.get('modelOnFrontDesktop') === 'false') {
     modelOnFrontDesktop = false;
@@ -57,6 +59,17 @@ let lightOrbitRadius = 1; // Distancia de la luz a la estatua. Recalculada al ca
 
 const LIGHT_OFFSET = 1; // D
 
+let texture = {};
+
+function loadLightTexture() {
+    const texLoader = new THREE.TextureLoader().setPath( './' );
+    texture = texLoader.load( textureFilename );
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+    texture.colorSpace = THREE.SRGBColorSpace;
+}
+
 function setupLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff);
     ambientLight.intensity = 0.2;
@@ -67,13 +80,7 @@ function setupLights() {
         light.intensity = 0;// Deactivate lights in scene
     }
 
-    // Load texture
-    const texLoader = new THREE.TextureLoader().setPath( './' );
-    const texture = texLoader.load( textureFilename );
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = false;
-    texture.colorSpace = THREE.SRGBColorSpace;
+    // loadLightTexture();
 
     // Setup stoplight
     spotLight = new THREE.SpotLight( 0xffffff, 100 );
@@ -147,33 +154,12 @@ function onSceneLoaded(model)
     })
 }
 
-// ---------
-// SCREEN RESIZE
-// --------
-
-// TODO: arreglar resize
+// SIN RESIZE
 // window.addEventListener("resize", resize);
 
-let lastWidth = 400;
-let lastHeight = 0;
 function resize () {
 
-    // Update sizes
-    // return;
-    // lastWidth = container.clientWidth;
-    // lastHeight = container.clientHeight;
-    // scrollPercent += (newScrollPercent - scrollPercent) * 0.3; // lerp
-
-    // sizes.width += (container.clientWidth - lastWidth) * 0.3;
-    // sizes.height += (container.clientHeight - lastHeight) * 0.3;
-    // sizes.width = lastWidth;
-    // sizes.height = lastHeight;
-    // console.log("Resized canvas to " + sizes.width + ", " + sizes.height);
-    // camera.aspect = sizes.width / sizes.height;
-
-
     onScroll(); // Por si cargamos la página a "mitad" scrollear
-
 
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
@@ -182,10 +168,8 @@ function resize () {
 
 
 let scrollPercent = 0;
-let marginPercent = 0;
-let maxScrollPercent = 0.9; // Dejar margen al footer
+
 function onScroll() {
-    // lastScrollPercent = scrollPercent;
     // Calculamos qué porcentaje de la página se ha recorrido
     const scrollTop = window.scrollY;
     const docHeight = document.body.scrollHeight - window.innerHeight;
@@ -228,9 +212,6 @@ function isMobilePlatform() {
     return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
 }
 
-function chooseModel() {
-    const modelParam = params.get('model'); // Busca el valor de ?model=
-}
 
 function createControls() {
     controlsDomElement = document.createElement('div');
@@ -263,11 +244,19 @@ function createControls() {
     }
 }
 
-function init() {
-    chooseModel();
+// Modelo de más resolución en desktop
+function chooseModel() {
     if (isMobilePlatform()) {
-        topFov = 43;
+        modelPath = './caesar-46k.glb';
     }
+    else {
+        modelPath = './caesar-168k.glb';
+    }
+}
+
+function init() {
+
+    chooseModel();
 
     container = document.createElement("div");
     container.classList.add('webgl-container');
@@ -324,9 +313,10 @@ function init() {
 
     // Load glb model
     const loader = new GLTFLoader();
+    loadLightTexture();
 
-    // AFTER LOAD MODEL
     loader.load( modelPath, function ( gltf ) {
+        // AFTER LOAD MODEL
         onSceneLoaded(gltf.scene);
         setupLights();
         // Controls require an invisible dom element
@@ -415,10 +405,13 @@ function animate() {
         camera.fov = topFov * (1 - scrollPercent) + bottomFov * scrollPercent;
     }
     camera.updateProjectionMatrix();
+
+    // Discarded lerp
     // const targetPos = new THREE.Vector3().copy(camPositions[0]);
     // targetPos.lerp(camPositions[1], scrollPercent); // scrollPercent debe ser de 0 a 1
     // camera.position.copy(targetPos);
     // camera.position.y -= cameraYOffset;
+
     // Render
     renderer.render(scene, camera);
 

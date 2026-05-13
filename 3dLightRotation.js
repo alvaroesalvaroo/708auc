@@ -155,12 +155,24 @@ function onSceneLoaded(model)
 }
 
 // SIN RESIZE
-// window.addEventListener("resize", resize);
+let resizeTimer;
+
+window.addEventListener("resize", () => {
+    // Si ya hay un temporizador en marcha, lo cancelamos
+    clearTimeout(resizeTimer);
+    // Creamos uno nuevo que se ejecutará tras 1000ms (1 segundo)
+    resizeTimer = setTimeout(() => {
+        resize(); // Llamada a tu función original
+    }, 300);
+});
 
 function resize () {
 
     onScroll(); // Por si cargamos la página a "mitad" scrollear
-
+    sizes.width = container.clientWidth;
+    sizes.height = container.clientHeight;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
     // Update renderer
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));

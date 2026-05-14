@@ -214,6 +214,7 @@ function createControls() {
     controlsDomElement.classList.add('controlssss');
 
     controlsDomElement.style.cssText = container.style.cssText; // Copy container position?
+    controlsDomElement.style.top = "120px";
     controlsDomElement.style.minWidth = '45%';
     controlsDomElement.style.pointerEvents = 'auto';
     controlsDomElement.style.zIndex = '1000';
@@ -253,7 +254,7 @@ function init() {
 
     container = document.createElement("div");
     container.classList.add('webgl-container');
-
+    container.style.pointerEvents = 'none';
     container.style.zIndex = 10;
     container.style.position = "fixed"; // Clave para que no se mueva con el scroll
     container.style.top = containerTop;        // OFFSETY

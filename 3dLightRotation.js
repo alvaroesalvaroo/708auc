@@ -13,7 +13,7 @@ let scene = {};
 
 // ----- CONFIG ------ //
 let modelOnFrontMobile = false;
-let modelOnFrontDesktop = true;
+let modelOnFrontDesktop = false;
 
 let containerTop = "-100px"; // Offset horizontal de la escena 3D
 let containerRight = "-10vw"; // Offset vertical de la escena 3D
@@ -215,21 +215,21 @@ function createControls() {
     controlsDomElement = document.createElement('div');
     controlsDomElement.classList.add('controlssss');
     //
-    // controlsDomElement.style.cssText = container.style.cssText; // Copy container position?
-    // controlsDomElement.style.top = "120px";
-    // controlsDomElement.style.minWidth = '45%';
-    // controlsDomElement.style.pointerEvents = 'auto';
-    // controlsDomElement.style.zIndex = '1000';
-
-    controlsDomElement.style.position = "absolute"; // El padre esta fixed
+    controlsDomElement.style.cssText = container.style.cssText; // Copy container position?
     controlsDomElement.style.top = "120px";
-    controlsDomElement.style.left = "0";
-    controlsDomElement.style.right = "0";
-    controlsDomElement.style.width = "100%";
-    controlsDomElement.style.height = "calc(100% - 120px)"; // Ocupa el 100% del espacio restante
+    controlsDomElement.style.minWidth = '45%';
+    controlsDomElement.style.pointerEvents = 'auto';
+    controlsDomElement.style.zIndex = '1000';
+    document.body.appendChild(controlsDomElement);
 
-    // document.body.appendChild(controlsDomElement);
-    container.appendChild(controlsDomElement);
+
+    // controlsDomElement.style.position = "absolute"; // El padre esta fixed
+    // controlsDomElement.style.top = "120px";
+    // controlsDomElement.style.left = "0";
+    // controlsDomElement.style.right = "0";
+    // controlsDomElement.style.width = "100%";
+    // controlsDomElement.style.height = "calc(100% - 120px)"; // Ocupa el 100% del espacio restante
+    // container.appendChild(controlsDomElement);
 
     controls = new OrbitControls(camera, controlsDomElement);
     controls.enableDamping = true; // Suaviza el movimiento (da inercia)
@@ -279,14 +279,14 @@ function init() {
     container.style.minWidth = "45vw";
     container.innerHTML = "";
 
-    // if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
-    //     document.body.appendChild(container);
-    // }
-    // else {
+    if ( (!isMobileDevice() && modelOnFrontDesktop) || isMobileDevice() && modelOnFrontMobile) {
+        document.body.appendChild(container);
+    }
+    else {
         let outerContainer = document.querySelector(".row-bg-wrap");
         outerContainer.classList.add('outer-container');
         outerContainer.appendChild(container);
-    // }
+    }
 
     // Save original size
     sizes.width = container.clientWidth; sizes.height = container.clientHeight;
@@ -389,14 +389,28 @@ function animate() {
 init();
 
 // FIX MENU LOCO DESPLEGABLE SLIDER TERRIBLE
-const botonLoco = document.querySelector('[aria-label="Navigation Menu"]');
+
+
+
+let botonLoco;
+setTimeout(() => {
+    botonLoco = document.querySelector('[aria-label="Navigation Menu"]');
+
+    if (botonLoco) {
+        botonLoco.addEventListener('click', e => {
+
+            toggleControls();
+
+        })
+    }
+}, 300);
 
 
 let isSliderOn = false;
 
 function toggleControls() {
     isSliderOn = !isSliderOn;
-
+    alert("toggle controls");
     if (isSliderOn) {
         controlsDomElement.style.pointerEvents = 'none';
         container.style.zIndex = 9999;
@@ -425,19 +439,3 @@ function toggleControls() {
 
 
 
-if (botonLoco) {
-    botonLoco.addEventListener('click', e => {
-
-        // e.preventDefault();
-        // 2. Aquí ejecutas TU función personalizada
-        toggleControls();
-
-        // 3. Recuperamos la URL original del enlace
-        // const urlDestino = botonLoco.getAttribute('href');
-        //
-        // // 4. Si el enlace tenía un destino real, redirigimos manualmente tras ejecutar tu código
-        // if (urlDestino && urlDestino !== '#') {
-        //     window.location.href = urlDestino;
-        // }
-    })
-}

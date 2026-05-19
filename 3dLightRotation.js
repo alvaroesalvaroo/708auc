@@ -255,7 +255,8 @@ function chooseModel() {
         modelPath = basePath + 'caesar-46k.glb';
     }
     else {
-        modelPath = basePath + 'caesar-168k.glb';
+        // modelPath = basePath + 'caesar-168k.glb';
+        modelPath = basePath + 'caesar-46k.glb';
     }
 }
 
@@ -312,7 +313,7 @@ function init() {
     // Load glb model
     const loader = new GLTFLoader();
     loadLightTexture();
-
+    console.log("Loading " + modelPath + "...");
     loader.load( modelPath, function ( gltf ) {
         // AFTER LOAD MODEL
         onSceneLoaded(gltf.scene);
@@ -390,32 +391,56 @@ init();
 
 // FIX MENU LOCO DESPLEGABLE SLIDER TERRIBLE
 
-
-
 let botonLoco;
-setTimeout(() => {
-    botonLoco = document.querySelector('[aria-label="Navigation Menu"]');
+// setTimeout(() => {
+//     botonLoco = document.querySelector('[aria-label="Navigation Menu"]');
+//
+//     if (botonLoco) {
+//         console.warn("botonloco: ");
+//         console.warn(botonLoco);
+//         botonLoco.addEventListener('click', e => {
+//
+//             toggleControls();
+//
+//         }, true)
+//     }
+//     else {
+//         console.warn("No bottonloco found.");
+//     }
+// }, 300);
+
+document.addEventListener('click', e => {
+
+    // Buscamos si el clic se originó en el botón o en CUALQUIERA de sus hijos (los iconos internos)
+    botonLoco = e.target.closest('[aria-label="Navigation Menu"]');
+    console.log(botonLoco);
 
     if (botonLoco) {
-        botonLoco.addEventListener('click', e => {
-
-            toggleControls();
-
-        })
+        console.warn("¡Clic interceptado con éxito al botonLoco");
+        toggleControls();
     }
-}, 300);
+
+}, true);
+
 
 
 let isSliderOn = false;
 
 function toggleControls() {
+
     isSliderOn = !isSliderOn;
-    alert("toggle controls");
+    console.warn("restart scene");
+    init();
+
+    console.warn("toggle controls");
     if (isSliderOn) {
+        console.warn("Abril");
+
         controlsDomElement.style.pointerEvents = 'none';
         container.style.zIndex = 9999;
 
         const botonCerrar = document.querySelector('.slide_out_area_close');
+
         if (botonCerrar) {
             botonCerrar.addEventListener('click', e => {
                 // e.preventDefault();
@@ -427,15 +452,16 @@ function toggleControls() {
         }
 
     } else {
+        console.warn("Cerral");
         // Volver a la pantalla inicial
         location.reload();
         // controlsDomElement.style.pointerEvents = '';
         // controlsDomElement.style.pointerEvents = '';
     }
 
-    init();
-
 }
+
+
 
 
 

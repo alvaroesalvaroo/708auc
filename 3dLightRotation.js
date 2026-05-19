@@ -6,6 +6,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// import { LoaderManager } from 'three/loaders/LoadingManager.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GridHelper } from 'three';
 
@@ -260,6 +261,18 @@ function chooseModel() {
     }
 }
 
+// const manager = new THREE.LoadingManager();
+// const loader = new GLTFLoader(manager);
+const loader = new GLTFLoader();
+
+// manager.onLoad = () => {
+//     console.log('¡Todas las descargas del manager han terminado con éxito!');
+// };
+//
+// manager.onError = (url) => {
+//     console.error('Error o abort al cargar:', url);
+// };
+
 function init() {
 
     chooseModel();
@@ -311,9 +324,13 @@ function init() {
 
 
     // Load glb model
-    const loader = new GLTFLoader();
+    // loader = new GLTFLoader(); // now is global
     loadLightTexture();
+    // console.log("Abortando posibles peticiones en curso");
+    // manager.abort();
+
     console.log("Loading " + modelPath + "...");
+
     loader.load( modelPath, function ( gltf ) {
         // AFTER LOAD MODEL
         onSceneLoaded(gltf.scene);
@@ -410,7 +427,7 @@ let botonLoco;
 // }, 300);
 
 document.addEventListener('click', e => {
-
+    console.log("click");
     // Buscamos si el clic se originó en el botón o en CUALQUIERA de sus hijos (los iconos internos)
     botonLoco = e.target.closest('[aria-label="Navigation Menu"]');
     console.log(botonLoco);

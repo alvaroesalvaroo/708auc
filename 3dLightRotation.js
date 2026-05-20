@@ -182,11 +182,25 @@ window.addEventListener("scroll", onScroll);
 
 let scrollPercent = 0;
 
+let isSliderOn = false;
+
 function onScroll() {
     // Calculamos qué porcentaje de la página se ha recorrido
     const scrollTop = window.scrollY;
     const docHeight = document.body.scrollHeight - window.innerHeight;
-    scrollPercent = scrollTop / docHeight;
+
+    if (docHeight === 0 && !isSliderOn) {
+        isSliderOn = true;
+        toggleControls();
+    }
+    else if (docHeight !== 0 && isSliderOn) {
+        isSliderOn = false;
+        toggleControls();
+    }
+
+    const newScrollPercent = scrollTop / docHeight;
+
+    if (!isNaN(newScrollPercent)) scrollPercent = newScrollPercent;
 }
 
 
@@ -375,7 +389,6 @@ function init() {
 const clock = new THREE.Clock();
 
 function animate() {
-
     controls.update(); // Solo necesario si enableDamping = true o autoRotate = true
 
     // ROTATION
@@ -427,27 +440,22 @@ let botonLoco;
 // }, 300);
 
 document.addEventListener('click', e => {
-    console.log("click");
     // Buscamos si el clic se originó en el botón o en CUALQUIERA de sus hijos (los iconos internos)
     botonLoco = e.target.closest('[aria-label="Navigation Menu"]');
-    console.log(botonLoco);
 
     if (botonLoco) {
-        console.warn("¡Clic interceptado con éxito al botonLoco");
-        toggleControls();
+        console.log("Forzando ocultación de controles");
+        onScroll();
+        isSliderOn = true;
+        controlsDomElement.style.pointerEvents = 'none';
     }
 
 }, true);
 
 
 
-let isSliderOn = false;
 
 function toggleControls() {
-
-    isSliderOn = !isSliderOn;
-    console.warn("restart scene");
-    init();
 
     console.warn("toggle controls");
     if (isSliderOn) {
@@ -471,8 +479,8 @@ function toggleControls() {
     } else {
         console.warn("Cerral");
         // Volver a la pantalla inicial
-        location.reload();
-        // controlsDomElement.style.pointerEvents = '';
+        // location.reload();
+        controlsDomElement.style.pointerEvents = 'auto';
         // controlsDomElement.style.pointerEvents = '';
     }
 
